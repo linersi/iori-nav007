@@ -188,6 +188,8 @@ export async function onRequest(context) {
   let homeSubtitleFont = '';
   let homeStatsFont = '';
   let homeHitokotoFont = '';
+  let homeSiteName = '';
+  let homeSiteDescription = '';
   let homeSearchEngineEnabled = false;
   let layoutGridCols = '4';
   let layoutCustomWallpaper = '';
@@ -211,6 +213,7 @@ export async function onRequest(context) {
         'home_hide_stats', 'home_stats_size', 'home_stats_color',
         'home_hide_hitokoto', 'home_hitokoto_size', 'home_hitokoto_color',
         'home_custom_font_url', 'home_title_font', 'home_subtitle_font', 'home_stats_font', 'home_hitokoto_font',
+        'home_site_name', 'home_site_description',
         'home_search_engine_enabled',
         'layout_grid_cols', 'layout_custom_wallpaper', 'layout_menu_layout',
         'layout_random_wallpaper', 'bing_country',
@@ -249,6 +252,9 @@ export async function onRequest(context) {
         if (row.key === 'home_subtitle_font') homeSubtitleFont = row.value;
         if (row.key === 'home_stats_font') homeStatsFont = row.value;
         if (row.key === 'home_hitokoto_font') homeHitokotoFont = row.value;
+
+        if (row.key === 'home_site_name') homeSiteName = row.value;
+        if (row.key === 'home_site_description') homeSiteDescription = row.value;
 
         if (row.key === 'home_search_engine_enabled') homeSearchEngineEnabled = row.value === 'true';
 
@@ -515,8 +521,8 @@ export async function onRequest(context) {
   const submissionEnabled = String(env.ENABLE_PUBLIC_SUBMISSION) === 'true';
   const submissionClass = submissionEnabled ? '' : 'hidden';
 
-  const siteName = env.SITE_NAME || '灰色轨迹';
-  const siteDescription = env.SITE_DESCRIPTION || '一个优雅、快速、易于部署的书签（网址）收藏与分享平台，完全基于 Cloudflare 全家桶构建';
+  const siteName = homeSiteName || env.SITE_NAME || '灰色轨迹';
+  const siteDescription = homeSiteDescription || env.SITE_DESCRIPTION || '一个优雅、快速、易于部署的书签（网址）收藏与分享平台，完全基于 Cloudflare 全家桶构建';
   const footerText = env.FOOTER_TEXT || '曾梦想仗剑走天涯';
 
   // Build Style Strings

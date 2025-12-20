@@ -1822,6 +1822,9 @@ const initSettings = () => {
   const homeStatsFontInput = document.getElementById('homeStatsFont');
   const homeHitokotoFontInput = document.getElementById('homeHitokotoFont');
 
+  const homeSiteNameInput = document.getElementById('homeSiteName');
+  const homeSiteDescriptionInput = document.getElementById('homeSiteDescription');
+
   const searchEngineSwitch = document.getElementById('searchEngineSwitch');
 
   // Font Options
@@ -1984,6 +1987,8 @@ const initSettings = () => {
     home_subtitle_font: '',
     home_stats_font: '',
     home_hitokoto_font: '',
+    home_site_name: '',
+    home_site_description: '',
     layout_enable_frosted_glass: false,
     layout_frosted_glass_intensity: '15',
     layout_grid_cols: '4',
@@ -2400,6 +2405,9 @@ const initSettings = () => {
     currentSettings.home_stats_font = homeStatsFontInput.value.trim();
     currentSettings.home_hitokoto_font = homeHitokotoFontInput.value.trim();
 
+    currentSettings.home_site_name = homeSiteNameInput.value.trim();
+    currentSettings.home_site_description = homeSiteDescriptionInput.value.trim();
+
     currentSettings.home_search_engine_enabled = searchEngineSwitch.checked;
 
     currentSettings.layout_custom_wallpaper = customWallpaperInput.value.trim();
@@ -2519,6 +2527,9 @@ const initSettings = () => {
             if (serverSettings.home_subtitle_font) currentSettings.home_subtitle_font = serverSettings.home_subtitle_font;
             if (serverSettings.home_stats_font) currentSettings.home_stats_font = serverSettings.home_stats_font;
             if (serverSettings.home_hitokoto_font) currentSettings.home_hitokoto_font = serverSettings.home_hitokoto_font;
+
+            if (serverSettings.home_site_name) currentSettings.home_site_name = serverSettings.home_site_name;
+            if (serverSettings.home_site_description) currentSettings.home_site_description = serverSettings.home_site_description;
 
             if (serverSettings.home_search_engine_enabled !== undefined) currentSettings.home_search_engine_enabled = serverSettings.home_search_engine_enabled === 'true';
 
@@ -2672,6 +2683,9 @@ const initSettings = () => {
     if (homeSubtitleFontInput) homeSubtitleFontInput.value = currentSettings.home_subtitle_font || '';
     if (homeStatsFontInput) homeStatsFontInput.value = currentSettings.home_stats_font || '';
     if (homeHitokotoFontInput) homeHitokotoFontInput.value = currentSettings.home_hitokoto_font || '';
+
+    if (homeSiteNameInput) homeSiteNameInput.value = currentSettings.home_site_name || '';
+    if (homeSiteDescriptionInput) homeSiteDescriptionInput.value = currentSettings.home_site_description || '';
 
     if (searchEngineSwitch) searchEngineSwitch.checked = !!currentSettings.home_search_engine_enabled;
 

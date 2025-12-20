@@ -250,6 +250,20 @@
 
              <!-- 首页设置内容 -->
             <div id="home-settings" class="settings-tab-content active">
+                <div class="p-3 bg-gray-50 rounded border border-gray-100 mb-3">
+                    <h4 class="text-sm font-bold text-gray-700 mb-3 border-b border-gray-200 pb-1">站点信息</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label for="homeSiteName" class="text-xs text-gray-500 block mb-1">站点名称 (优先于环境变量)</label>
+                            <input type="text" id="homeSiteName" placeholder="例如：我的导航" class="w-full text-sm p-2 border rounded">
+                        </div>
+                        <div>
+                            <label for="homeSiteDescription" class="text-xs text-gray-500 block mb-1">站点描述 (优先于环境变量)</label>
+                            <textarea id="homeSiteDescription" placeholder="请输入站点描述..." class="w-full text-sm p-2 border rounded" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+
                <div class="p-2 hover:bg-gray-50 rounded">
                          <label class="block text-gray-700 font-medium mb-2">菜单布局</label>
                          <div class="flex gap-4">
