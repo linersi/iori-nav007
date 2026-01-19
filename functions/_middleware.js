@@ -39,6 +39,18 @@ export function jsonResponse(data, status = 200) {
   });
 }
 
+export async function clearHomeCache(env) {
+  try {
+    await Promise.all([
+      env.NAV_AUTH.delete('home_html_public'),
+      env.NAV_AUTH.delete('home_html_private')
+    ]);
+    console.log('Home cache cleared');
+  } catch (e) {
+    console.error('Failed to clear home cache:', e);
+  }
+}
+
 // DB_SCHEMA and SCHEMA_VERSION are imported from constants.js
 
 let dbInitialized = false;

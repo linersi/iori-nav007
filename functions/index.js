@@ -119,6 +119,27 @@ export async function onRequest(context) {
   const isAuthenticated = await isAdminAuthenticated(request, env);
   const includePrivate = isAuthenticated ? 1 : 0;
 
+  // 1. 尝试读取 KV 缓存 (仅针对无查询参数的首页请求)
+  const url = new URL(request.url);
+  const isHomePage = url.pathname === '/' && !url.search;
+  
+  if (isHomePage) {
+    const cacheKey = isAuthenticated ? 'home_html_private' : 'home_html_public';
+    try {
+      const cachedHtml = await env.NAV_AUTH.get(cacheKey);
+      if (cachedHtml) {
+        return new Response(cachedHtml, {
+          headers: { 
+            'Content-Type': 'text/html; charset=utf-8',
+            'X-Cache': 'HIT'
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('Failed to read home cache:', e);
+    }
+  }
+
   // 并行执行数据库查询（分类、设置、站点）
   const categoryQuery = isAuthenticated 
     ? 'SELECT * FROM category ORDER BY sort_order ASC, id ASC'
@@ -306,7 +327,6 @@ export async function onRequest(context) {
   }
 
   // 确定目标分类
-  const url = new URL(request.url);
   let requestedCatalogName = (url.searchParams.get('catalog') || '').trim();
   const explicitAll = requestedCatalogName.toLowerCase() === 'all';
   
@@ -670,11 +690,8 @@ export async function onRequest(context) {
   
 
     // Sites Grid
-
-        const sitesGridMarkup = sites.map((site, index) => {
-
+    let sitesGridMarkup = sites.map((site, index) => {
                       const rawName = site.name || '未命名';
-
                   const rawCatalog = site.catelog_name || '未分类';
 
       const rawDesc = site.desc || '暂无描述';
@@ -964,6 +981,33 @@ export async function onRequest(context) {
             `;
 
     }).join('');
+
+  if (sites.length === 0) {
+      const emptyStateText = categories.length === 0 ? '欢迎使用 iori-nav' : '暂无书签';
+      const emptyStateSub = categories.length === 0 ? '项目初始化完成，请前往后台添加分类和书签。' : '该分类下还没有添加任何书签。';
+      
+      sitesGridMarkup = `
+        <div class="col-span-full flex flex-col items-center justify-center py-24 text-center animate-fade-in">
+            <div class="w-32 h-32 mb-6 text-gray-200 dark:text-gray-700/50">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-medium text-gray-600 dark:text-gray-300 mb-2">${emptyStateText}</h3>
+            <p class="text-gray-400 dark:text-gray-500 max-w-md mx-auto mb-8">${emptyStateSub}</p>
+            ${
+                !homeHideAdmin ? 
+                `<a href="/admin" target="_blank" class="inline-flex items-center px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl transition-all shadow-lg shadow-primary-600/20 hover:shadow-primary-600/40 hover:-translate-y-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    前往管理后台
+                </a>` : ''
+            }
+        </div>
+      `;
+  }
 
   let gridClass = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 justify-items-center';
   if (layoutGridCols === '5') {
@@ -1358,7 +1402,11 @@ export async function onRequest(context) {
         gridCols: "${layoutGridCols}",
         cardStyle: "${layoutCardStyle}",
         enableFrostedGlass: ${layoutEnableFrostedGlass},
-        rememberLastCategory: ${homeRememberLastCategory}
+        rememberLastCategory: ${homeRememberLastCategory},
+        randomWallpaper: ${layoutRandomWallpaper},
+        wallpaperSource: "${wallpaperSource}",
+        wallpaperCid360: "${wallpaperCid360}",
+        bingCountry: "${bingCountry}"
       };
     </script>
   `;
@@ -1404,7 +1452,18 @@ export async function onRequest(context) {
   });
 
   if (layoutRandomWallpaper) {
+    // 强制禁用缓存，设置头部
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    
     response.headers.append('Set-Cookie', `wallpaper_index=${nextWallpaperIndex}; Path=/; Max-Age=31536000; SameSite=Lax`);
+  }
+
+  // 写入缓存 (仅当未开启随机壁纸时)
+  if (isHomePage && !layoutRandomWallpaper) {
+    const cacheKey = isAuthenticated ? 'home_html_private' : 'home_html_public';
+    context.waitUntil(env.NAV_AUTH.put(cacheKey, html));
   }
 
   return response;
